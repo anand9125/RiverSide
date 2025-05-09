@@ -51,6 +51,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        sidebar: {
+					DEFAULT: 'hsl(var(--sidebar-background))',
+					foreground: 'hsl(var(--sidebar-foreground))',
+					primary: 'hsl(var(--sidebar-primary))',
+					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+					accent: 'hsl(var(--sidebar-accent))',
+					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+					border: 'hsl(var(--sidebar-border))',
+					ring: 'hsl(var(--sidebar-ring))'
+				},
         riverside: {
           50: "#f0f7ff",
           100: "#e0effe",
@@ -63,6 +73,16 @@ export default {
           800: "#064d84",
           900: "#0a416e",
           950: "#062a4a",
+        },
+        podcast: {
+					'dark-blue': '#1A1F2C',
+					'accent-red': '#ea384c',
+					'accent-blue': '#1EAEDB'
+				},
+        borderRadius: {
+          lg: 'var(--radius)',
+          md: 'calc(var(--radius) - 2px)',
+          sm: 'calc(var(--radius) - 4px)'
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -107,9 +127,13 @@ export default {
         "wave-4": "wave 2.0s linear infinite",
         "wave-5": "wave 1.7s linear infinite",
         "float": "float 6s ease-in-out infinite",
+        'accordion-down': 'accordion-down 0.2s ease-out',
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+         'podcast-studio': "url('https://images.unsplash.com/photo-1589903308904-1010c2294adc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')",
       }
     },
   },
