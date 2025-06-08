@@ -55,11 +55,24 @@ model Recording {
   durationSeconds Int?
   uploadedAt      DateTime  @default(now())
 
-  participantId String       //Who recorded the file
-  participant   Participant @relation(fields: [participantId], references: [id])
+  chunkIndex      Int?              // For ordering during upload
+  startedAt       DateTime?         // For aligning tracks
+  status          RecordingStatus   @default(PENDING)
+  uploadSessionId String?           // For resumable uploads
 
-  roomId        String       //Which room it belongs to
-  room          Room        @relation(fields: [roomId], references: [id])
+  participantId   String            //Who recorded the file
+  participant     Participant @relation(fields: [participantId], references: [id])
+
+  roomId          String               //Which room it belongs to
+  room            Room        @relation(fields: [roomId], references: [id])
+}
+
+enum RecordingStatus {
+  PENDING
+  UPLOADING
+  UPLOADED
+  MERGED
+  ERROR
 }
 
 enum FileType {
