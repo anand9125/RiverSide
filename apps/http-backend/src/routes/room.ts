@@ -1,10 +1,10 @@
 import { createRoom } from "../controller/roomController";
 import { userAuthMiddleware } from "../Middlewares/userMiddleware";
-import { userRouter } from "./user";
+import { Router } from 'express'
 
-const router = userRouter()
+const router = Router()
 
-router.post("/create-room",userAuthMiddleware,createRoom)
+router.post("/create-room",createRoom)
 
 
 export const roomRouter = router

@@ -7,7 +7,8 @@ export class Peer {
   socket: WebSocket;
   roomId: string;
   transports = new Map<string, Transport>();
-  producers = new Map<string, Producer>();
+  producers = new Map<string, Producer>(); //Each producer might represent webcam, mic, or any custom media.
+
   consumers = new Map<string, Consumer>();
 
   constructor(id: string, socket: WebSocket, roomId: string) {
@@ -16,12 +17,21 @@ export class Peer {
     this.roomId = roomId;
   }
 
-  addTransport(transport: Transport) {
-    this.transports.set(transport.id, transport);
-  }
+addTransport(transport: Transport) {
+  const transportId = transport.id;
+  this.transports.set(transportId, transport);
+}
+
 
   addProducer(label: string, producer: Producer) {
     this.producers.set(label, producer);
+    const allProducers = [...this.producers.values()];
+    console.log("allProducers",allProducers)
+
+    
+
+
+  
   }
 
   addConsumer(consumer: Consumer) {
@@ -52,6 +62,9 @@ export class Room {
   }
   getPeer(peerId:string){
     return this.peers.get(peerId);
+  }
+  getAllPeers(){
+    return Array.from(this.peers.values());
   }
 
   removePeer(peerId: string) {
