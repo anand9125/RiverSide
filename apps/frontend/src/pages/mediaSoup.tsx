@@ -20,70 +20,100 @@ export async function connectToServer(
     socket = new WebSocket('ws://localhost:4000');
 
     socket.onopen = () => {
+      console.log('✅ WebSocket connected');
       send('join', { roomId, peerId });
     };
+
     socket.onmessage = async (event) => {
-     const { type, data } = JSON.parse(event.data);
+      const { type, data } = JSON.parse(event.data);
+      console.log('📨 Received message:', type, data);
 
-  // Handle direct promises
-  if (pendingRequests.has(type)) {
-    pendingRequests.get(type)!(data);
-    pendingRequests.delete(type);
-    return;
-  }
-  console.log("type",type)
-
-  switch (type) {
-      case 'joined':
-        console.log(event.data);  
-      send('getRouterRtpCapabilities', { roomId });
-      
-      // 👇 Add this
-      if (data.existingProducers && data.existingProducers.length) {
-        for (const prod of data.existingProducers) {
-          await subscribeToPeer(roomId, peerId, prod.peerId, prod.label, onTrack);
-        }
+      // Handle direct promises
+      if (pendingRequests.has(type)) {
+        pendingRequests.get(type)!(data);
+        pendingRequests.delete(type);
+        return;
       }
-      break;
 
-    
-    case 'routerRtpCapabilities':
-      device = new mediasoupClient.Device();
-      await device.load({ routerRtpCapabilities: data });
-      resolve();
-      break;
+      switch (type) {
+        case 'joined':
+          console.log('✅ Joined room:', data);
+          send('getRouterRtpCapabilities', { roomId });
+          
+          // Subscribe to existing producers
+          if (data.existingProducers && data.existingProducers.length) {
+            console.log('📺 Found existing producers:', data.existingProducers);
+            for (const prod of data.existingProducers) {
+              await subscribeToPeer(roomId, peerId, prod.peerId, prod.label, onTrack);
+            }
+          }
+          break;
 
-    case 'newProducer':
-       console.log('New producer available', data);
-      await subscribeToPeer(roomId, peerId, data.peerId, data.label, onTrack);
-      break;
+        case 'routerRtpCapabilities':
+          console.log('🔧 Setting up device with RTP capabilities');
+          device = new mediasoupClient.Device();
+          await device.load({ routerRtpCapabilities: data });
+          resolve();
+          break;
 
-    case 'consumed':
-       if (!recvTransport) {
-    console.error('❌ recvTransport not ready');
-    return;
-  }
-      const consumer = await recvTransport.consume({
-        id: data.id,
-        producerId: data.producerId,
-        kind: data.kind,
-        rtpParameters: data.rtpParameters,
-      });
-      console.log('Consumer track kind:', consumer.track.kind);
-      console.log('Track enabled:', consumer.track.enabled);
-      console.log('Track muted:', consumer.track.muted);
+        case 'newProducer':
+          console.log('🆕 New producer available:', data);
+          await subscribeToPeer(roomId, peerId, data.peerId, data.label, onTrack);
+          break;
 
+        case 'consumed':
+          console.log('🎬 Consuming media:', data);
+          if (!recvTransport) {
+            console.error('❌ recvTransport not ready');
+            return;
+          }
 
-      consumers.set(consumer.id, consumer);
-      const remoteStream = new MediaStream([consumer.track]);
-      console.log('Remote track:', consumer.track);
-      onTrack(remoteStream);
-           console.log('Consumed:', data);
-      send('resume', { roomId, peerId, consumerId: consumer.id });
-      break;
-  }
-};
+          try {
+            const consumer = await recvTransport.consume({
+              id: data.id,
+              producerId: data.producerId,
+              kind: data.kind,
+              rtpParameters: data.rtpParameters,
+            });
 
+            console.log('✅ Consumer created:', {
+              id: consumer.id,
+              kind: consumer.kind,
+              trackEnabled: consumer.track.enabled,
+              trackMuted: consumer.track.muted,
+              trackReadyState: consumer.track.readyState
+            });
+
+            consumers.set(consumer.id, consumer);
+            
+            // Create MediaStream and add track
+            const remoteStream = new MediaStream([consumer.track]);
+            console.log('📺 Remote stream created with tracks:', remoteStream.getTracks().length);
+            
+            // Resume consumer immediately after creation
+            send('resume', { roomId, peerId, consumerId: consumer.id });
+            
+            // Call onTrack callback
+            onTrack(remoteStream);
+            
+          } catch (error) {
+            console.error('❌ Failed to consume:', error);
+          }
+          break;
+
+        case 'resumed':
+          console.log('▶️ Consumer resumed');
+          break;
+      }
+    };
+
+    socket.onerror = (error) => {
+      console.error('❌ WebSocket error:', error);
+    };
+
+    socket.onclose = () => {
+      console.log('🔌 WebSocket disconnected');
+    };
   });
 }
 
@@ -92,12 +122,22 @@ export async function startWebcam(
   peerId: string,
   stream: MediaStream
 ) {
+  console.log('📹 Starting webcam...');
   const track = stream.getVideoTracks()[0];
-   console.log(" i am going to create a transport")
+  
+  if (!track) {
+    console.error('❌ No video track found');
+    return;
+  }
+
+  console.log('🔧 Creating send transport...');
   await createTransport(roomId, peerId, true);
 
+  console.log('📤 Producing video track...');
   const producer = await sendTransport.produce({ track });
   producers.set('webcam', producer);
+  
+  console.log('✅ Producer created:', producer.id);
 }
 
 async function subscribeToPeer(
@@ -107,7 +147,10 @@ async function subscribeToPeer(
   label: string,
   onTrack: Callback
 ) {
+  console.log(`🔗 Subscribing to ${label} from ${remotePeerId}`);
+  
   if (!recvTransport) {
+    console.log('🔧 Creating receive transport...');
     await createTransport(roomId, peerId, false);
   }
 
@@ -119,12 +162,11 @@ async function subscribeToPeer(
     rtpCapabilities: device.rtpCapabilities,
     label,
   });
-  console.log('Subscribing to', label, 'from', remotePeerId);
-
 }
 
 function send(type: string, data: any, expectResponseType?: string): Promise<any> | void {
   const message = JSON.stringify({ type, data });
+  console.log('📤 Sending:', type, data);
   socket.send(message);
   
   if (expectResponseType) {
@@ -133,19 +175,22 @@ function send(type: string, data: any, expectResponseType?: string): Promise<any
     });
   }
 }
+
 async function createTransport(
   roomId: string,
   peerId: string,
- isSend: boolean
+  isSend: boolean
 ): Promise<void> {
-  console.log("i am in create transport")
+  console.log(`🚛 Creating ${isSend ? 'send' : 'receive'} transport...`);
+  
   const data = await send('createWebRtcTransport', { roomId, peerId }, 'createdTransport') as any;
-  console.log("✅ i am in create transport", data);
+  console.log('✅ Transport created with params:', data);
  
   if (isSend) {
     sendTransport = device.createSendTransport(data);
-    console.log("send transport we are ready to connecte webrtc trasnport",sendTransport)
+    
     sendTransport.on('connect', ({ dtlsParameters }, callback) => {
+      console.log('🔗 Send transport connecting...');
       send('connectTransport', {
         roomId,
         peerId,
@@ -156,6 +201,7 @@ async function createTransport(
     });
 
     sendTransport.on('produce', async ({ kind, rtpParameters }, callback) => {
+      console.log('📤 Producing:', kind);
       const res = await send(
         'produce',
         {
@@ -169,15 +215,17 @@ async function createTransport(
         'produced'
       );
       callback({ id: res.id });
-      console.log('Producing track...', kind);
-
     });
-  } else {
-   
 
+    sendTransport.on('connectionstatechange', (state) => {
+      console.log('📡 Send transport state:', state);
+    });
+
+  } else {
     recvTransport = device.createRecvTransport(data);
 
     recvTransport.on('connect', ({ dtlsParameters }, callback) => {
+      console.log('🔗 Receive transport connecting...');
       send('connectTransport', {
         roomId,
         peerId,
@@ -185,6 +233,10 @@ async function createTransport(
         dtlsParameters,
       });
       callback();
+    });
+
+    recvTransport.on('connectionstatechange', (state) => {
+      console.log('📡 Receive transport state:', state);
     });
   }
 }

@@ -3,7 +3,7 @@ import { CreateRoomSchema } from "../types";
 import {prismaClient  } from "@repo/db/src";
 
 export const createRoom = async(req:Request,res:Response) => {
-    console.log("you are able to hit me ")
+    console.log("you are able to hit me ",req.body)
     const parseData = CreateRoomSchema.safeParse(req.body)
     console.log(parseData)
     if (!parseData.success) {
@@ -14,12 +14,18 @@ export const createRoom = async(req:Request,res:Response) => {
     }
     try{
         console.log(parseData.data)
-        const room = await prismaClient.room.create({
-            data:{
-                title:parseData.data.title,
-                scheduledFor:parseData.data.scheduledFor
-            }
-        })
+       const room = await prismaClient.room.create({
+        data: {
+            title: parseData.data.title,
+            scheduledFor: parseData.data.scheduledFor,
+            hostUser: {
+            connect: {
+                id: parseData.data.hostUserId,
+            },
+            },
+        },
+        });
+
         console.log(room)
         res.status(201).json({
             message: "Room created successfully",

@@ -13,5 +13,6 @@ export const SigninSchema = z.object({
 
 export const CreateRoomSchema = z.object({
   title: z.string().min(3),
-  scheduledFor: z.string().datetime()
+  scheduledFor: z.string().datetime(),
+  hostUserId: z.string()
 })

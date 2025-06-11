@@ -101,3 +101,33 @@ export const userSignin = async(req:Request,res:Response) => {
     }
 }
 
+export const getUserDataer = async(req:Request,res:Response)=>{
+   console.log("you are able to hit me ",req.userId)
+    const userId = req.userId;
+   if(!userId){
+      res.status(404).json({
+        message: "UserId not found"
+      });
+   }
+   try{
+    const user = await client.user.findUnique({
+        where:{
+            id:userId
+        }
+    })
+    res.status(200).json({
+      message: "User data fetched successfully",
+      user:{
+        id:user.id,
+        name:user.name,
+        email:user.email
+      }
+    })
+   }
+   catch(e){
+       res.status(500).json({
+       message: "Internal server error"
+      })
+   }
+}
+
