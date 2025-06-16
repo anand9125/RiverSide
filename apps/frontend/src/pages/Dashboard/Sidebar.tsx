@@ -15,7 +15,8 @@ interface SidebarProps {
   activeView: string;
   setActiveView: (view: string) => void;
 }
-
+const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+const username = userData.name as string;
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -71,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
               <span className="text-white font-bold text-lg">A</span>
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-white">Alex Johnson</p>
+              <p className="font-semibold text-white">{username}</p>
               <p className="text-sm text-gray-400">Pro Plan</p>
             </div>
             <button className="p-2 text-gray-400 hover:text-white transition-colors">

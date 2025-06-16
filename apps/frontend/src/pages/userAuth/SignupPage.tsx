@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import LoginForm from "../components/SigninForm";
-
-const SigninPage = () => {
+import SignupForm from "../..//components/SignupForm";
+const SignupPage = () => {
   const navigate = useNavigate();
  
   return (
@@ -15,7 +14,7 @@ const SigninPage = () => {
       {/* Login container */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md">
-          <LoginForm />
+          <SignupForm />
           
           <p className="mt-8 text-center text-xs text-gray-400">
             By signing in, you agree to our{" "}
@@ -29,4 +28,4 @@ const SigninPage = () => {
   );
 };
 
-export default SigninPage;
+export default SignupPage;

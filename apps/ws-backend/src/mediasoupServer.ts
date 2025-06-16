@@ -187,8 +187,14 @@ async function handleProduce(data: any, ws: ws) {
     peerProduce?.addProducer(label, producer);
     console.log(`✅ Producer created: ${producer.id} for ${peerId} [${label}]`);
 
-    // Notify other peers about new producer
-    roomProduce?.broadcast(peerId, 'newProducer', { peerId, label });
+    // Notify other peers about new producer Add producerId for better clarity on the client:
+    roomProduce?.broadcast(peerId, 'newProducer', {
+    peerId,
+    label,
+    producerId: producer.id,
+    kind: producer.kind
+  });
+
     send(ws, 'produced', { id: producer.id });
   } catch (error) {
     console.error('❌ Failed to produce:', error);
@@ -250,6 +256,7 @@ async function handleConsume(data: any, ws: ws) {
       kind: consumer.kind,
       rtpParameters: consumer.rtpParameters,
       label,
+      remotePeerId
     });
   } catch (err) {
     console.error(`❌ Failed to consume:`, err);
@@ -288,6 +295,8 @@ async function handleLeave(data: any, ws: ws) {
     console.log(`🗑️ Removing empty room ${roomId}`);
     RoomManager.removeRoom(roomId);
   }
+  leaveRoom?.broadcast(peerId, 'peerLeft', { peerId });
+
   
   send(ws, 'left', {});
 }

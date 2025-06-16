@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRoomStore } from '../../store/useRoomStror';
 import { 
   Mic, 
@@ -30,7 +30,7 @@ const Studio: React.FC = () => {
   const [volume, setVolume] = useState(75);
   const navigate = useNavigate()
    const {createRoom,isLoading} = useRoomStore()
-
+    const localVideoRef = useRef<HTMLVideoElement>(null);
 
   const token  = localStorage.getItem('token')
   // Timer effect
@@ -69,6 +69,24 @@ const Studio: React.FC = () => {
 
   const handlePauseResume = () => {
     setIsPaused(!isPaused);
+  };
+
+  const handleCameraOn = async() => {
+    setVideoEnabled(true);
+    if(videoEnabled){
+      setVideoEnabled(false);
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({
+       video: true,
+       audio: true,
+      });
+
+    
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = stream;
+    }
+    
+    
   };
 
   return (
@@ -122,13 +140,20 @@ const Studio: React.FC = () => {
             {videoEnabled ? (
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
+                  {/* <div className="text-center">
                     <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
                       <span className="text-white font-bold text-4xl">A</span>
                     </div>
                     <p className="text-white text-xl font-semibold">Alex Johnson</p>
                     <p className="text-purple-300">Video Active</p>
-                  </div>
+                  </div> */}
+                   <video
+                    ref={localVideoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover rounded-lg"
+                />
                 </div>
               </div>
             ) : (
@@ -137,7 +162,7 @@ const Studio: React.FC = () => {
                   <VideoOff className="w-24 h-24 text-gray-500 mx-auto mb-6" />
                   <p className="text-gray-400 text-xl">Camera is off</p>
                   <button 
-                    onClick={() => setVideoEnabled(true)}
+                    onClick={handleCameraOn}
                     className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl transition-all duration-200"
                   >
                     Turn on camera
@@ -238,7 +263,7 @@ const Studio: React.FC = () => {
                 </button>
                 
                 <button
-                  onClick={() => setVideoEnabled(!videoEnabled)}
+                  onClick={handleCameraOn}
                   className={`p-4 rounded-xl transition-all duration-200 ${
                     videoEnabled 
                       ? 'bg-green-500/20 border border-green-500/30 text-green-400' 
