@@ -1,5 +1,10 @@
 import * as mediasoupClient from 'mediasoup-client';
 import { MediaSoupState, TrackCallback, PeerStreams } from '../types/mediasoup';
+import { useMediaSoup } from './useMediaSoup';
+import { useRef } from 'react';
+import { mediaStore } from './mediaStore';
+
+
 
 class MediaSoupClient {
   private state: MediaSoupState = {
@@ -53,7 +58,7 @@ class MediaSoupClient {
       };
 
       this.state.socket.onerror = (error) => {
-        console.error('❌ WebSocket error:', error);
+        console.error(' WebSocket error:', error);
         reject(error);
       };
 
@@ -65,6 +70,7 @@ class MediaSoupClient {
   }
 
   private async handleMessage(type: string, data: any, roomId: string, peerId: string): Promise<void> {
+     
     switch (type) {
       case 'joined':
         console.log('✅ Joined room:', data);
@@ -78,6 +84,19 @@ class MediaSoupClient {
           }
         }
         break;
+      
+      case "peerJoined":
+         
+      try{
+        for(const[lable,track] of mediaStore.producerTrackMap.entries()){
+        await mediaSoupClient.produceTrack(roomId, peerId, track, lable);
+         console.log(`📤 Reproduced [${lable}] to new peer`);
+       }  
+        }catch (error) {
+          console.error('❌ Failed to connect:', error);
+        }
+        break;
+
 
       case 'routerRtpCapabilities':
         console.log('🔧 Setting up device with RTP capabilities');
@@ -108,7 +127,7 @@ class MediaSoupClient {
     console.log('🎬 Consuming media:', data);
     
     if (!this.state.recvTransport) {
-      console.error('❌ recvTransport not ready');
+      console.error(' recvTransport not ready');
       return;
     }
 
@@ -287,7 +306,7 @@ class MediaSoupClient {
     // Close existing producer with the same label
     const existingProducer = this.state.producers.get(label);
     if (existingProducer && !existingProducer.closed) {
-      console.log(`🛑 Closing existing producer for ${label}`);
+      console.log(` Closing existing producer for ${label}`);
       existingProducer.close();
       
       // Notify server about producer closure
@@ -313,7 +332,7 @@ class MediaSoupClient {
   async stopProducing(label: string, roomId: string, peerId: string): Promise<void> {
     const producer = this.state.producers.get(label);
     if (producer && !producer.closed) {
-      console.log(`🛑 Stopping producer for ${label}`);
+      console.log(` Stopping producer for ${label}`);
       producer.close();
       this.state.producers.delete(label);
       

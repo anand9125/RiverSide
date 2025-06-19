@@ -119,6 +119,12 @@ async function handleJoinRoom(data: any, ws: ws) {
     peerId,
     existingProducers,
   });
+
+  for (const [id, peer] of room.peers) {
+    if (id !== peerId) {
+      send(ws, 'peerJoined', { peerId });
+    }
+  }
 }
 
 async function handleCreateWebRtcTransport(data: any, ws: ws) {

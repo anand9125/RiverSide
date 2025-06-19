@@ -2,7 +2,7 @@ import { useState } from "react";
 
 type RecordingState = 'inactive' | 'recording' | 'paused';
 
-type TrackLabel = 'webcam' | 'screen';
+
 interface ParticipantRecorder {
   recorder: MediaRecorder;  // the MediaRecorder instance for their stream so that each partipent recording can handled by a dedicated MediaRedorder 
   chunks: Blob[];           // array of data chunks (Blob[])
@@ -12,7 +12,7 @@ interface ParticipantRecorder {
  export const useRecordingManager = () => {
   const [recorders, setRecorders] = useState<Map<string, ParticipantRecorder>>(new Map());
 
-  const startRecording = (participantId: string, stream: MediaStream,label:TrackLabel) => {
+  const startRecording = (participantId: string, stream: MediaStream) => {
     const mediaRecorder = new MediaRecorder(stream);
     const chunks: Blob[] = [];
 

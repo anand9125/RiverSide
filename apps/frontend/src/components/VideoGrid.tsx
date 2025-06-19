@@ -3,12 +3,12 @@ import React, { RefObject } from 'react';
 interface RemoteStream {
   stream: MediaStream;
   peerId: string;
-  label: string; // e.g., 'cam', 'screen'
+  label: string;
 }
 
 interface VideoGridProps {
   localVideoRef: RefObject<HTMLVideoElement>;
-  remoteStreams: RemoteStream[];
+  remoteStreams: Map<string, RemoteStream>;
   username: string;
   isCameraOn: boolean;
   isScreenSharing: boolean;
@@ -23,8 +23,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      {/* Local webcam feed */}
-      {isCameraOn && (
+      {(isCameraOn || isScreenSharing) && (
         <div className="relative bg-black rounded-xl overflow-hidden">
           <video
             ref={localVideoRef}
@@ -39,16 +38,15 @@ const VideoGrid: React.FC<VideoGridProps> = ({
         </div>
       )}
 
-      {/* Remote video streams */}
-      {remoteStreams.map(({ stream, peerId, label }) => (
-         <div key={`${peerId}-${label}`} className="relative bg-black rounded-xl overflow-hidden">
+      {Array.from(remoteStreams.values()).map(({ stream, peerId, label }) => (
+        <div key={peerId} className="relative bg-black rounded-xl overflow-hidden">
           <video
             autoPlay
             playsInline
-            muted={label === 'screen'} // don't double play audio
+            muted={label === 'screen'}
             className="w-full h-full object-cover"
             ref={(el) => {
-              if (el && el.srcObject !== stream) {
+              if (el && stream && el.srcObject !== stream) {
                 el.srcObject = stream;
               }
             }}
@@ -57,7 +55,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
             {peerId.slice(0, 5)} {label === 'screen' ? '(Screen)' : ''}
           </div>
         </div>
-       
       ))}
     </div>
   );
